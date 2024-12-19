@@ -11,7 +11,7 @@ import SwiftUI
 struct nine_amApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainView()
         }
     }
 }

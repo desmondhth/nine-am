@@ -6,3 +6,14 @@
 //
 
 import Foundation
+
+struct Task: Identifiable {
+    let id: UUID = UUID()
+    var content: String
+    var order: Int
+    
+    init(content: String = "", order: Int) {
+        self.content = content
+        self.order = order
+    }
+}

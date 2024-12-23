@@ -9,8 +9,10 @@ import SwiftUI
 
 struct TaskInputView: View {
     @StateObject private var viewModel = TaskInputViewViewModel()
-    @FocusState private var focusedField: Int?
     @Binding var isPresented: Bool
+    @Binding var showingMatrix: Bool
+    @FocusState private var focusedField: Int?
+    @Binding var tasks: [String]
     
     private var taskCountText: String {
         let count = max(viewModel.nonEmptyTaskCount, 1)
@@ -100,6 +102,7 @@ struct TaskInputView: View {
                 HStack {
                     Button {
                         withAnimation(.easeInOut(duration: 0.3)) {
+                            print("Debug: Back button tapped")
                             isPresented = false
                         }
                     } label: {
@@ -111,7 +114,16 @@ struct TaskInputView: View {
                     Spacer()
                     
                     Button(action: {
-                        // Handle continue action
+                        // Update the tasks in MainView
+                        tasks = viewModel.tasks.filter { !$0.isEmpty }
+                        
+                        // Update states
+                        showingMatrix = true
+                        isPresented = false
+                        
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            // Animation will handle the transitions
+                        }
                     }) {
                         HStack(spacing: 4) {
                             Text(taskCountText)
@@ -151,10 +163,12 @@ struct TaskInputView: View {
                 
                 Spacer()
             }
+            .opacity(showingMatrix ? 0 : 1)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .transition(.opacity)
         .onAppear {
+            print("Debug: TaskInputView appeared")
             focusedField = 0
         }
     }
@@ -168,5 +182,5 @@ extension View {
 }
 
 #Preview {
-    TaskInputView(isPresented: .constant(true))
+    TaskInputView(isPresented: .constant(true), showingMatrix: .constant(false), tasks: .constant([]))
 }

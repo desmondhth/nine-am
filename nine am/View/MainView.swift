@@ -9,6 +9,8 @@ import SwiftUI
 
 struct MainView: View {
     @State private var showingTaskInput = false
+    @State private var showingMatrix = false
+    @State private var tasks: [String] = []
     
     var body: some View {
         ZStack {
@@ -23,12 +25,12 @@ struct MainView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 70, height: 73)
-                    .opacity(showingTaskInput ? 0 : 1)
+                    .opacity(showingTaskInput || showingMatrix ? 0 : 1)
 
                 //today's date
                 Text("\(Date().formatted(.dateTime.weekday(.wide))), \(Date().formatted(.dateTime.day())) \(Date().formatted(.dateTime.month(.abbreviated)))")
                     .font(.custom("Caveat-Bold", size: 32))
-                    .opacity(showingTaskInput ? 0 : 1)
+                    .opacity(showingTaskInput || showingMatrix ? 0 : 1)
                 
                 //type task button
                 Button {
@@ -41,6 +43,7 @@ struct MainView: View {
                         .foregroundColor(.black)
                         .opacity(0.15)
                 }
+                .opacity(showingTaskInput || showingMatrix ? 0 : 1)
                 
                 // Buttons
                 VStack(spacing: 22) {
@@ -64,7 +67,7 @@ struct MainView: View {
                         .shadow(color: Color.black.opacity(0.03), radius: 4, x: 0, y: 4)
                         .font(.system(size: 16, weight: .semibold, design: .default))
                     }
-                    .opacity(showingTaskInput ? 0 : 1)
+                    .opacity(showingTaskInput || showingMatrix ? 0 : 1)
                     
                     // Back to last session button
                     Button(action: {
@@ -83,14 +86,24 @@ struct MainView: View {
                             )
                             .shadow(color: Color.black.opacity(0.03), radius: 4, x: 0, y: 4)
                     }
-                    .opacity(showingTaskInput ? 0 : 1)
+                    .opacity(showingTaskInput || showingMatrix ? 0 : 1)
                 }
             }
             .padding(.bottom, 15)
             
             // Task Input View
             if showingTaskInput {
-                TaskInputView(isPresented: $showingTaskInput)
+                TaskInputView(
+                    isPresented: $showingTaskInput,
+                    showingMatrix: $showingMatrix,
+                    tasks: $tasks
+                )
+                .transition(.opacity)
+            }
+            
+            // Add MatrixView here
+            if showingMatrix {
+                MatrixView(tasks: tasks)
                     .transition(.opacity)
             }
         }

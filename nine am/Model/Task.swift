@@ -11,9 +11,22 @@ struct Task: Identifiable {
     let id: UUID = UUID()
     var content: String
     var order: Int
+    var quadrant: MatrixQuadrant?
+    var position: CGPoint
+    var isSelected: Bool = false
     
-    init(content: String = "", order: Int) {
+    init(content: String = "", order: Int, quadrant: MatrixQuadrant? = nil, position: CGPoint = .zero, isSelected: Bool = false) {
         self.content = content
         self.order = order
+        self.quadrant = quadrant
+        self.position = position
+        self.isSelected = isSelected
     }
+}
+
+enum MatrixQuadrant: CaseIterable {
+    case urgentImportant
+    case notUrgentImportant
+    case urgentNotImportant
+    case notUrgentNotImportant
 }

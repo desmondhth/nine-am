@@ -8,9 +8,9 @@
 import SwiftUI
 
 struct TaskInputView: View {
-    @Binding var isPresented: Bool
     @StateObject private var viewModel = TaskInputViewViewModel()
     @FocusState private var focusedField: Int?
+    @Binding var isPresented: Bool
     
     private var taskCountText: String {
         let count = max(viewModel.nonEmptyTaskCount, 1)
@@ -18,26 +18,63 @@ struct TaskInputView: View {
     }
     
     private func taskRow(at index: Int) -> some View {
-        HStack(alignment: .top) {
+        // First ensure the index is valid
+        guard index < viewModel.tasks.count else {
+            return EmptyView().eraseToAnyView()
+        }
+        
+        return HStack(alignment: .top) {
             Text("\(index + 1).")
                 .font(.system(size: Constants.Font.taskSize, design: .rounded))
             
-            TextField("", text: $viewModel.tasks[index])
-                .font(.system(size: Constants.Font.taskSize, design: .rounded))
-                .foregroundColor(.black)
-                .focused($focusedField, equals: index)
-                .onSubmit {
-                    guard !viewModel.tasks[index].isEmpty else { return }
-                    let nextIndex = index + 1
-                    viewModel.addTask(at: index)
+            TextField("", text: Binding(
+                get: { 
+                    guard index < viewModel.tasks.count else { return "" }
+                    return viewModel.tasks[index]
+                },
+                set: { newValue in
+                    guard index < viewModel.tasks.count else { return }
+                    viewModel.tasks[index] = newValue
+                }
+            ))
+            .font(.system(size: Constants.Font.taskSize, design: .rounded))
+            .foregroundColor(.black)
+            .focused($focusedField, equals: index)
+            .onSubmit {
+                guard index < viewModel.tasks.count else { return }
+                guard !viewModel.tasks[index].isEmpty else { return }
+                
+                viewModel.addTask(at: index)
+                
+                // Only set focus if the new index exists
+                let nextIndex = index + 1
+                if nextIndex < viewModel.tasks.count {
                     focusedField = nextIndex
                 }
-                .onChange(of: viewModel.tasks[index]) { _, _ in
-                    withAnimation {
-                        viewModel.removeTask(at: index)
+            }
+            .onChange(of: viewModel.tasks[index]) { oldValue, newValue in
+                guard index < viewModel.tasks.count else { return }
+                
+                if newValue.isEmpty && oldValue != newValue {
+                    // Dispatch to next run loop to avoid state conflicts
+                    DispatchQueue.main.async {
+                        withAnimation {
+                            viewModel.removeTask(at: index)
+                            
+                            // Handle focus after removal
+                            if viewModel.tasks.indices.contains(index - 1) {
+                                focusedField = index - 1
+                            } else if !viewModel.tasks.isEmpty {
+                                focusedField = 0
+                            } else {
+                                focusedField = nil
+                            }
+                        }
                     }
                 }
+            }
         }
+        .eraseToAnyView()
     }
     
     private func placeholderRow(count: Int) -> some View {
@@ -120,6 +157,13 @@ struct TaskInputView: View {
         .onAppear {
             focusedField = 0
         }
+    }
+}
+
+// Helper extension to erase view type
+extension View {
+    func eraseToAnyView() -> AnyView {
+        AnyView(self)
     }
 }
 

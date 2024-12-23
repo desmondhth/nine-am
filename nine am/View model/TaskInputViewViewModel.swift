@@ -16,14 +16,19 @@ class TaskInputViewViewModel: ObservableObject {
     }
     
     func addTask(at index: Int) {
-        if !tasks[index].isEmpty {
-            tasks.append("")
-        }
+        guard index < tasks.count else { return }
+        guard !tasks[index].isEmpty else { return }
+        tasks.insert("", at: index + 1)
     }
     
     func removeTask(at index: Int) {
-        if tasks[index].isEmpty && tasks.count > 1 {
-            tasks.remove(at: index)
+        guard index < tasks.count else { return }
+        // Don't remove if it's the last task
+        guard tasks.count > 1 else { 
+            // If it's the last task, just clear it
+            tasks[index] = ""
+            return 
         }
+        tasks.remove(at: index)
     }
 }

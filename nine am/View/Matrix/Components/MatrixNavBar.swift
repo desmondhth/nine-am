@@ -5,6 +5,7 @@ struct MatrixNavBar: View {
     let mode: MatrixViewModel.MatrixViewMode
     let tasksRemaining: Int
     let onBackTapped: () -> Void
+    @ObservedObject var viewModel: MatrixViewModel
     
     var body: some View {
         HStack {
@@ -22,7 +23,9 @@ struct MatrixNavBar: View {
             
             // Add task button
             Button(action: {
-                // Add action to switch to .addTask mode
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    viewModel.mode = .addTask
+                }
             }) {
                 Image(systemName: "plus")
                     .foregroundColor(.black)

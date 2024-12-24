@@ -14,6 +14,7 @@ struct Task: Identifiable {
     var quadrant: MatrixQuadrant?
     var position: CGPoint
     var isSelected: Bool = false
+    var isDragging: Bool = false
     
     init(content: String = "", order: Int, quadrant: MatrixQuadrant? = nil, position: CGPoint = .zero, isSelected: Bool = false) {
         self.content = content

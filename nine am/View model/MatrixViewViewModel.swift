@@ -22,13 +22,24 @@ class MatrixViewModel: ObservableObject {
     @Published var newTask: String = ""
     
     func moveTask(_ taskId: String, to quadrant: MatrixQuadrant) {
-        if let index = tasks.firstIndex(where: { $0.id.uuidString == taskId }) {
-            tasks[index].quadrant = quadrant
-        } else if let stagingIndex = stagingTasks.firstIndex(where: { $0.id.uuidString == taskId }) {
+        if let stagingIndex = stagingTasks.firstIndex(where: { $0.id.uuidString == taskId }) {
             var task = stagingTasks.remove(at: stagingIndex)
             task.quadrant = quadrant
-            tasks.append(task)
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                tasks.append(task)
+            }
+        } else if let sourceIndex = tasks.firstIndex(where: { $0.id.uuidString == taskId }) {
+            // Moving between quadrants
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                tasks[sourceIndex].quadrant = quadrant
+            }
         }
+    }
+    
+    func moveTask(_ taskId: String, toIndex index: Int, in quadrant: MatrixQuadrant) {
+        guard let sourceIndex = tasks.firstIndex(where: { $0.id.uuidString == taskId }) else { return }
+        let task = tasks.remove(at: sourceIndex)
+        tasks.insert(task, at: index)
     }
     
     func initialize(with tasks: [String]) {
@@ -53,5 +64,13 @@ class MatrixViewModel: ObservableObject {
         } else if let index = stagingTasks.firstIndex(where: { $0.id.uuidString == taskId }) {
             stagingTasks[index].isSelected = true
         }
+    }
+    
+    var totalTasks: Int {
+        tasks.count + stagingTasks.count
+    }
+    
+    var currentTaskNumber: Int {
+        totalTasks - stagingTasks.count + 1
     }
 }

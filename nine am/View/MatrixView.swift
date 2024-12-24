@@ -27,7 +27,8 @@ struct MatrixView: View {
                         withAnimation(.easeInOut(duration: 0.3)) {
                             dismiss()
                         }
-                    }
+                    },
+                    viewModel: viewModel
                 )
                 
                 switch viewModel.mode {

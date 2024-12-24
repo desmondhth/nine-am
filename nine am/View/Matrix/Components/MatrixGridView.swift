@@ -4,6 +4,7 @@ struct MatrixGridView: View {
     let mode: MatrixViewModel.MatrixViewMode
     @Binding var tasks: [Task]
     @ObservedObject var viewModel: MatrixViewModel
+    @State private var hoveredQuadrant: MatrixQuadrant?
     
     private let gridPadding: CGFloat = 24
     private let diamondSize: CGFloat = 8
@@ -20,6 +21,33 @@ struct MatrixGridView: View {
             path.addLine(to: CGPoint(x: point.x - diamondSize, y: point.y))
             path.closeSubpath()
         }
+    }
+    
+    private func quadrantContent(_ quadrant: MatrixQuadrant, geometry: GeometryProxy) -> some View {
+        let quadrantTasks = tasks.filter { $0.quadrant == quadrant }
+        let maxVisibleTasks = 4 // Adjust based on your UI
+        
+        return VStack(alignment: .leading, spacing: 8) {
+            ForEach(Array(quadrantTasks.prefix(maxVisibleTasks))) { task in
+                TaskBlock(task: task) {
+                    viewModel.selectTask(task.id.uuidString)
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 35) // Fixed height for quadrant tasks
+                .transition(.scale.combined(with: .opacity))
+            }
+            
+            if quadrantTasks.count > maxVisibleTasks {
+                Button(action: {
+                    // Show task list view
+                }) {
+                    Text("\(quadrantTasks.count - maxVisibleTasks) more tasks")
+                        .foregroundColor(.gray)
+                        .font(.system(size: 14))
+                }
+            }
+        }
+        .frame(width: geometry.size.width/2 - gridPadding*3)
     }
     
     var body: some View {
@@ -97,6 +125,31 @@ struct MatrixGridView: View {
                         .position(x: centerX + 50, y: gridPadding + 200)
                 }
                 .frame(height: height)
+                
+                // Add drop zones for each quadrant
+                ForEach(MatrixQuadrant.allCases, id: \.self) { quadrant in
+                    let position = positionForQuadrant(quadrant, in: geometry)
+                    ZStack {
+                        Rectangle()
+                            .fill(hoveredQuadrant == quadrant ? Color.blue.opacity(0.1) : Color.clear)
+                            .frame(width: geometry.size.width/2 - gridPadding*2,
+                                   height: gridHeight(in: geometry)/2 - gridPadding*2)
+                        
+                        quadrantContent(quadrant, geometry: geometry)
+                    }
+                    .position(position)
+                    .dropDestination(for: String.self) { items, location in
+                        guard let taskId = items.first else { return false }
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            viewModel.moveTask(taskId, to: quadrant)
+                        }
+                        return true
+                    } isTargeted: { isTargeted in
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            hoveredQuadrant = isTargeted ? quadrant : nil
+                        }
+                    }
+                }
                 
                 // Tasks
                 ForEach(tasks) { task in
